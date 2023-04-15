@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using TMS.Data.Forms.Validation;
 using TMS.Database.DatabaseRepository;
 using TMS.Database.EntityFramework;
+using TMS.Services.AppServices.TaskAppService;
 using TMS.Services.AppServices.UserAppService;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +23,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddTransient<ITaskService, TaskService>();
 
 builder.Services.AddControllers();
 
@@ -30,6 +32,8 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
 builder.Services.AddValidatorsFromAssembly(typeof(LoginUserFormValidation).Assembly);
 builder.Services.AddValidatorsFromAssembly(typeof(CreateUserFormValidation).Assembly);
+builder.Services.AddValidatorsFromAssembly(typeof(CreateTaskFormValidation).Assembly);
+builder.Services.AddValidatorsFromAssembly(typeof(UpdateTaskFormValidation).Assembly);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
