@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TMS.Data.Forms;
 using TMS.Data.Models;
@@ -40,10 +41,10 @@ public class TaskService : ITaskService
     }
 
     public object GetTaskByUsername(string username)
-        =>
-            _ctx.GetAll().Where(x => x.User.UserName.Equals(username))
-                .Select(TaskViewModels.Default.Compile())
-                .FirstOrDefault() ?? new object();
+        => _ctx.GetAll(include: q => q.Include(t => t.User))
+            .Where(x => x.User.UserName.Equals(username))
+            .Select(TaskViewModels.Default.Compile())
+            .FirstOrDefault() ?? new object();
 
 
     public IEnumerable<object> GetAllTasks()

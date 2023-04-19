@@ -17,8 +17,17 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class
     public TEntity GetById(int id)
         => _dbSet.Find(id) ?? throw new InvalidOperationException($"Entity with id {id} was not found");
 
-    public IEnumerable<TEntity> GetAll()
-        => _dbSet.ToList();
+    public IEnumerable<TEntity> GetAll(Func<IQueryable<TEntity>, IQueryable<TEntity>>? include = null)
+    {
+        IQueryable<TEntity> query = _dbSet;
+
+        if (include != null)
+        {
+            query = include(query);
+        }
+
+        return query.ToList();
+    }
 
     public async Task<TEntity> Add(TEntity entity)
     {

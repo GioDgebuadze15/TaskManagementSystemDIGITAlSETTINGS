@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -18,8 +19,18 @@ using TMS.Services.AppServices.UserAppService;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddLogging(logging =>
+{
+    logging.ClearProviders();
+    logging.AddConsole();
+    logging.AddFile(builder.Configuration["File:Path"]);
+});
+
+// builder.Services.AddDbContext<AppDbContext>(options =>
+// options.UseInMemoryDatabase("Dev"));
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseInMemoryDatabase("Dev"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultDb")));
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     {
@@ -110,16 +121,25 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
+    var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
     if (app.Environment.IsDevelopment())
     {
         // Todo: change this and make it more secure
         // This is only for development
-        new IdentityUserBuilder()
-            .WithName("admin")
-            .WithPassword("Admin12345")
-            .WithClaim(TmsConstants.Claims.Role, TmsConstants.Roles.Admin)
-            .Build(userManager);
+        var admin = userManager.FindByNameAsync("admin").GetAwaiter().GetResult();
+        if (admin == null)
+        {
+            var adminClaim = new Claim(TmsConstants.Claims.Role, TmsConstants.Roles.Admin);
+
+            new IdentityUserBuilder()
+                .WithName("admin")
+                .WithPassword("Admin12345")
+                .WithClaim(adminClaim)
+                .Build(userManager);
+
+            ctx.SaveChangesAsync().GetAwaiter().GetResult();
+        }
     }
 }
 
