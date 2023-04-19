@@ -39,6 +39,13 @@ public class TaskService : ITaskService
         }
     }
 
+    public object GetTaskByUsername(string username)
+        =>
+            _ctx.GetAll().Where(x => x.User.UserName.Equals(username))
+                .Select(TaskViewModels.Default.Compile())
+                .FirstOrDefault() ?? new object();
+
+
     public IEnumerable<object> GetAllTasks()
         => _ctx.GetAll().Select(TaskViewModels.Default.Compile());
 
@@ -76,7 +83,6 @@ public class TaskService : ITaskService
             task.ShortDescription = updateTaskForm.ShortDescription;
             task.Description = updateTaskForm.Description;
             task.UserId = user.Id;
-            task.Deleted = updateTaskForm.Deleted;
 
             await _ctx.Update(task);
             return new UpdateTaskResponse(200, null, TaskViewModels.Default.Compile().Invoke(task));

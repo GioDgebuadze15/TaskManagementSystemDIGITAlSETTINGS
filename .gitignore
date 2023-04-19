@@ -1,6 +1,7 @@
 bin/
 obj/
 .idea/
+/TMS.Api/key
 /packages/
 riderModule.iml
 /_ReSharper.Caches/

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TMS.Data.Forms;
 using TMS.Services.AppServices.TaskAppService;
@@ -18,12 +19,17 @@ public class TaskController : ApiController
     public IActionResult GetOne(int id)
         => Ok(_iTaskService.GetTaskById(id));
 
+    [HttpGet("{username}")]
+    public IActionResult GetOne(string username)
+        => Ok(_iTaskService.GetTaskByUsername(username));
+
     [HttpGet]
     public IActionResult GetAll()
         => Ok(_iTaskService.GetAllTasks());
 
     [HttpPost]
-    public async Task<IActionResult> Add([FromBody] CreateTaskForm createTaskForm)
+    [Authorize(Roles = $"{TmsConstants.Roles.TaskCreate},{TmsConstants.Roles.Admin}")]
+    public async Task<IActionResult> Add([FromForm] CreateTaskForm createTaskForm)
     {
         var result = await _iTaskService.CreateTask(createTaskForm);
 
@@ -35,7 +41,8 @@ public class TaskController : ApiController
     }
 
     [HttpPut]
-    public async Task<IActionResult> Update([FromBody] UpdateTaskForm updateTaskForm)
+    [Authorize(Roles = $"{TmsConstants.Roles.TaskUpdate},{TmsConstants.Roles.Admin}")]
+    public async Task<IActionResult> Update([FromForm] UpdateTaskForm updateTaskForm)
     {
         var result = await _iTaskService.UpdateTask(updateTaskForm);
         return result.StatusCode switch
@@ -45,8 +52,9 @@ public class TaskController : ApiController
             _ => Ok(result)
         };
     }
-    
+
     [HttpDelete("{id::int}")]
+    [Authorize(Roles = $"{TmsConstants.Roles.TaskDelete},{TmsConstants.Roles.Admin}")]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _iTaskService.DeleteTask(id);

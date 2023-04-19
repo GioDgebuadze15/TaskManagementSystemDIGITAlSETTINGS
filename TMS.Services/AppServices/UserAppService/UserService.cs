@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using TMS.Data.Forms;
 using TMS.Data.Models;
 
@@ -22,24 +23,15 @@ public class UserService : IUserService
             loginUserForm.Password,
             true,
             false);
+        if (!result.Succeeded)
+            return new SignInResponse(404, "Incorrect data!", null);
 
-        return result.Succeeded
-            ? new SignInResponse(200, null)
-            : new SignInResponse(404, "Incorrect data!");
+        var user = await _userManager.FindByNameAsync(loginUserForm.Username);
+        var userClaims = await _userManager.GetClaimsAsync(user);
+        var token = JwtTokenHelper.GenerateJwtToken(user, userClaims);
+        return new SignInResponse(200, null, token);
     }
 
-    public async Task<SignUpResponse> CreateUser(CreateUserForm createUserForm)
-    {
-        var user = new IdentityUser
-        {
-            UserName = createUserForm.Username
-        };
-        var createUserResult = await _userManager.CreateAsync(user, createUserForm.Password);
-
-        if (!createUserResult.Succeeded)
-            return new SignUpResponse(400, "Username already exists!");
-
-        await _signInManager.SignInAsync(user, true);
-        return new SignUpResponse(200, null);
-    }
+    public async Task<IEnumerable<string>> GetAllUserNames()
+        => await _userManager.Users.Select(x => x.UserName).ToListAsync();
 }
