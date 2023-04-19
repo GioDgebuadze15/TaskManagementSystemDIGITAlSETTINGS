@@ -12,6 +12,7 @@ using TMS.Database.DatabaseRepository;
 using TMS.Database.EntityFramework;
 using TMS.Services.AppServices;
 using TMS.Services.AppServices.AdminAppService;
+using TMS.Services.AppServices.Middleware;
 using TMS.Services.AppServices.TaskAppService;
 using TMS.Services.AppServices.UserAppService;
 
@@ -144,6 +145,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseStaticFiles();
+
+app.UseMiddleware<LoggingMiddleware>();
 
 app.MapControllers();
 
