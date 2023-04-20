@@ -31,7 +31,11 @@ public class TaskService : ITaskService
     {
         try
         {
-            return TaskViewModels.Default.Compile().Invoke(_ctx.GetById(id));
+            return _ctx.GetById(id)
+                .Include(x => x.File)
+                .Include(x => x.User)
+                .Select(TaskViewModels.Default.Compile())
+                .FirstOrDefault() ?? new object();
         }
         catch (InvalidOperationException ex)
         {
@@ -41,14 +45,19 @@ public class TaskService : ITaskService
     }
 
     public object GetTaskByUsername(string username)
-        => _ctx.GetAll(include: q => q.Include(t => t.User))
-            .Where(x => x.User.UserName.Equals(username))
+        => _ctx.GetAll()
+            .Include(x => x.File)
+            .Include(x => x.User)
+            .Where(x => x.User.UserName.Equals(username)).AsEnumerable()
             .Select(TaskViewModels.Default.Compile())
             .FirstOrDefault() ?? new object();
 
 
     public IEnumerable<object> GetAllTasks()
-        => _ctx.GetAll().Select(TaskViewModels.Default.Compile());
+        => _ctx.GetAll()
+            .Include(x => x.File)
+            .Include(x => x.User)
+            .Select(TaskViewModels.Default.Compile());
 
     public async Task<CreateTaskResponse> CreateTask(CreateTaskForm createTaskForm)
     {
@@ -78,12 +87,25 @@ public class TaskService : ITaskService
 
         try
         {
-            var task = _ctx.GetById(updateTaskForm.Id);
+            var task = _ctx.GetById(updateTaskForm.Id)
+                .Include(x => x.File)
+                .Include(x => x.User)
+                .FirstOrDefault();
 
-            task.Title = updateTaskForm.Title;
+            task!.Title = updateTaskForm.Title;
             task.ShortDescription = updateTaskForm.ShortDescription;
             task.Description = updateTaskForm.Description;
             task.UserId = user.Id;
+
+            if (updateTaskForm.File is not null)
+            {
+                if (task.File?.FileName is { })
+                    DeleteFile(task.File.FileName);
+
+                var fileName = await SaveFile(updateTaskForm.File);
+                task.File = new File {FileName = fileName};
+            }
+
 
             await _ctx.Update(task);
             return new UpdateTaskResponse(200, null, TaskViewModels.Default.Compile().Invoke(task));
@@ -99,9 +121,17 @@ public class TaskService : ITaskService
     {
         try
         {
-            var task = _ctx.GetById(id);
-            await _ctx.Delete(task);
-            return new DeleteTaskResponse(200, null, task);
+            var task = _ctx.GetById(id)
+                .Include(x => x.File)
+                .Include(x => x.User)
+                .FirstOrDefault();
+
+            await _ctx.Delete(task ?? throw new InvalidOperationException("Cant find task to delete."));
+
+            if (task.File?.FileName is { })
+                DeleteFile(task.File.FileName);
+
+            return new DeleteTaskResponse(200, null, TaskViewModels.Default.Compile().Invoke(task));
         }
         catch (InvalidOperationException ex)
         {
@@ -109,6 +139,7 @@ public class TaskService : ITaskService
             return new DeleteTaskResponse(404, "Cant find task to delete.", null);
         }
     }
+
 
     private async Task<string> SaveFile(IFormFile file)
     {
@@ -125,4 +156,8 @@ public class TaskService : ITaskService
     private string GetSavePath(string image)
         =>
             Path.Combine(_env.WebRootPath, "files", image);
+
+    private void DeleteFile(string fileFileName)
+        =>
+            System.IO.File.Delete(GetSavePath(fileFileName));
 }

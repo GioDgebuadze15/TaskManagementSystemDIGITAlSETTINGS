@@ -26,11 +26,11 @@ builder.Services.AddLogging(logging =>
     logging.AddFile(builder.Configuration["File:Path"]);
 });
 
-// builder.Services.AddDbContext<AppDbContext>(options =>
-// options.UseInMemoryDatabase("Dev"));
-
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultDb")));
+options.UseInMemoryDatabase("Dev"));
+
+// builder.Services.AddDbContext<AppDbContext>(options =>
+    // options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultDb")));
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     {
@@ -58,14 +58,6 @@ builder.Services.AddAuthentication(options =>
             ValidateAudience = false,
         };
     });
-// builder.Services.AddAuthorization(options =>
-// {
-// options.AddPolicy(TmsConstants.Policies.Admin, policy => policy
-// .RequireAuthenticatedUser()
-// .RequireClaim(TmsConstants.Claims.Role,
-// TmsConstants.Roles.Admin)
-// );
-// });
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddTransient<IUserService, UserService>();
@@ -128,7 +120,7 @@ using (var scope = app.Services.CreateScope())
         // Todo: change this and make it more secure
         // This is only for development
         var admin = userManager.FindByNameAsync("admin").GetAwaiter().GetResult();
-        if (admin == null)
+        if (admin is null)
         {
             var adminClaim = new Claim(TmsConstants.Claims.Role, TmsConstants.Roles.Admin);
 

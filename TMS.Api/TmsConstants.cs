@@ -2,11 +2,6 @@
 
 public struct TmsConstants
 {
-    public struct Policies
-    {
-        public const string Admin = nameof(Admin);
-    }
-
     public struct Roles
     {
         public const string Admin = nameof(Admin);

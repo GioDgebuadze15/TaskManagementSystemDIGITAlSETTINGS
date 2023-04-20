@@ -27,7 +27,7 @@ public class IdentityUserBuilder
         return this;
     }
 
-    public IdentityUser Build(UserManager<IdentityUser> userManager)
+    public void Build(UserManager<IdentityUser> userManager)
     {
         var user = new IdentityUser(_name);
         userManager.CreateAsync(user, _password).GetAwaiter().GetResult();
@@ -36,7 +36,5 @@ public class IdentityUserBuilder
         {
             userManager.AddClaimAsync(user, claim).GetAwaiter().GetResult();
         }
-
-        return user;
     }
 }

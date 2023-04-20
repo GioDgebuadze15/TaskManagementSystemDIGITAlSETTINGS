@@ -19,7 +19,7 @@ public static class JwtTokenHelper
             new(ClaimTypes.Name, user.UserName),
         };
 
-        if (userClaims != null && userClaims.Any())
+        if (userClaims is not null && userClaims.Any())
             claims.AddRange(userClaims);
 
         // Create a JWT token
