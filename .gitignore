@@ -3,7 +3,6 @@ obj/
 .idea/
 /TMS.Api/key
 /TMS.Api/Logs/
-/TMS.Api/wwwroot/files/*
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
